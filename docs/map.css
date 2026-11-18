@@ -197,9 +197,9 @@ html, body {
 .door { transform-origin: 660px 170px; transition: transform 0.4s steps(3); }
 .door-open .door { transform: scaleX(0.12); }
 
-.inv-pos { transform: translate(820px, 230px); transition: transform 1.6s linear; }
-.inv-in .inv-pos { transform: translate(500px, 230px); }
-.lean .inv-pos { transform: translate(470px, 226px); transition-duration: 0.4s; }
+.inv-pos { transform: translate(820px, 160px); transition: transform 1.6s linear; }
+.inv-in .inv-pos { transform: translate(496px, 160px); }
+.lean .inv-pos { transform: translate(466px, 156px); transition-duration: 0.4s; }
 .inv-in:not(.lean) .inv { animation: walk 0.4s steps(2) 4; }
 
 .student-pos { transform: translate(286px, 336px); transition: transform 0.35s steps(3); }
