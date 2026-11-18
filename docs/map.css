@@ -127,6 +127,24 @@ html, body {
 
 .tip strong { color: var(--gold); font-weight: 700; }
 
+.tip.pinned { pointer-events: auto; }
+
+.tip-action {
+  display: block;
+  margin-top: 8px;
+  width: 100%;
+  font: inherit;
+  font-weight: 700;
+  color: var(--paper);
+  background: #b3261e;
+  border: 2px solid var(--paper);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.tip-action:hover { background: #d1352b; }
+.tip-action:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
 .soldier { cursor: pointer; }
 .soldier.me .ring { stroke: var(--gold); stroke-width: 4; }
 .soldier.dim { opacity: 0.35; }
@@ -148,4 +166,138 @@ html, body {
   .find { top: auto; bottom: 16px; right: 16px; }
   .find input { width: 8.5rem; }
   .banner { bottom: 96px; }
+}
+
+/* ---------- interrogation room ---------- */
+
+.interro {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 14, 28, 0.88);
+  font-variant-ligatures: none;
+}
+
+.stage {
+  position: relative;
+  width: min(96vw, 150vh);
+  aspect-ratio: 16 / 10;
+  border: 4px solid var(--paper);
+  box-shadow: 6px 6px 0 #000;
+  overflow: hidden;
+  background: #2f323c;
+}
+
+.room { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.room g, .room polygon { transform-box: view-box; }
+.room text { font-family: var(--font); shape-rendering: auto; }
+
+.door { transform-origin: 660px 170px; transition: transform 0.4s steps(3); }
+.door-open .door { transform: scaleX(0.12); }
+
+.inv-pos { transform: translate(820px, 230px); transition: transform 1.6s linear; }
+.inv-in .inv-pos { transform: translate(500px, 230px); }
+.lean .inv-pos { transform: translate(470px, 226px); transition-duration: 0.4s; }
+.inv-in:not(.lean) .inv { animation: walk 0.4s steps(2) 4; }
+
+.student-pos { transform: translate(286px, 336px); transition: transform 0.35s steps(3); }
+.kneel .student-pos { transform: translate(292px, 452px); }
+.legs-kneel, .arms-pray { display: none; }
+.kneel .legs-kneel, .kneel .arms-pray { display: inline; }
+.kneel .legs-seated, .kneel .arms-down { display: none; }
+
+.sweat { opacity: 0; }
+.sweat:not(.sweat2) { opacity: 1; animation: drip 1.4s steps(4) infinite; }
+.nervous .sweat2 { opacity: 1; animation: drip 1.1s steps(4) infinite; }
+.panic .student { animation: tremble 0.15s steps(2) infinite; }
+
+.file { transform: translateY(-320px); opacity: 0; transition: transform 0.25s steps(3), opacity 0.1s; }
+.file-in .file { transform: none; opacity: 1; }
+.paper { transform: translateX(220px); opacity: 0; transition: transform 0.5s steps(4), opacity 0.2s; }
+.paper-in .paper { transform: none; opacity: 1; }
+
+.lamp { transform-origin: 400px 0; animation: swing 3s ease-in-out infinite alternate; }
+.lean .lamp { animation-duration: 0.7s; }
+.cone { animation: flicker 4s steps(1) infinite; }
+
+.shake .room { animation: tremble 0.08s steps(2) 5; }
+
+.bubble {
+  position: absolute;
+  max-width: 44%;
+  padding: 10px 14px;
+  background: #fff;
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  font-size: clamp(0.8rem, 2.1vw, 1.3rem);
+  line-height: 1.3;
+  visibility: hidden;
+}
+
+.bubble.show { visibility: visible; }
+.bubble.inv { right: 3%; top: 5%; }
+.bubble.stu { left: 3%; top: 12%; }
+
+@media (max-width: 600px) {
+  .bubble { max-width: 62%; padding: 5px 8px; font-size: 0.62rem; border-width: 2px; box-shadow: 3px 3px 0 var(--ink); }
+  .bubble.stu { top: 3%; }
+  .stage .skip { font-size: 0.65rem; padding: 3px 8px; border-width: 2px; }
+}
+
+.bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -14px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-right: 3px solid var(--ink);
+  border-bottom: 3px solid var(--ink);
+}
+
+.bubble.inv::after { right: 22%; transform: skewX(-30deg); }
+.bubble.stu::after { left: 22%; transform: skewX(30deg); }
+
+.stage button {
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--gold);
+  border: 3px solid var(--ink);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.stage button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.skip { position: absolute; right: 2%; bottom: 3%; font-size: 0.9rem; }
+
+.endcard {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 24px;
+  background: rgba(20, 14, 28, 0.82);
+  color: var(--paper);
+}
+
+.ended .endcard { display: grid; }
+.ended .skip { display: none; }
+.endcard h2 { margin: 0; font-size: clamp(1.4rem, 4.5vw, 2.6rem); color: var(--gold); }
+.endcard p { margin: 0; font-size: clamp(0.9rem, 2.4vw, 1.3rem); }
+.end-row { display: flex; gap: 12px; justify-content: center; margin-top: 8px; }
+
+@keyframes walk { 50% { transform: translateY(-6px); } }
+@keyframes drip { to { transform: translateY(14px); } }
+@keyframes tremble { 50% { transform: translateX(3px); } }
+@keyframes swing { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+@keyframes flicker { 0%, 100% { opacity: 0.16; } 47% { opacity: 0.05; } 49% { opacity: 0.2; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .interro *, .interro *::after { animation: none !important; transition: none !important; }
 }

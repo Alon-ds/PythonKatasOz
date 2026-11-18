@@ -304,7 +304,7 @@ function drawSoldier(login, student, x, y, parent) {
   el("circle", { class: "ring", cx: 0, cy: -22, r: 13, fill: "none", stroke: "#241a33", "stroke-width": 3 }, body);
   el("rect", { x: -12, y: -41, width: 24, height: 7, fill: "#5b6b2f", stroke: "#241a33", "stroke-width": 2 }, body);
   el("rect", { x: -16, y: -35, width: 32, height: 4, fill: "#5b6b2f", stroke: "#241a33", "stroke-width": 2 }, body);
-  bindTip(g, () => soldierTip(login, student));
+  bindTip(g, () => soldierTip(login, student), (node) => openInterrogation(login, student, node));
   return g;
 }
 
@@ -349,26 +349,64 @@ function drawSoldiers(parent) {
 
 /* ---------- tooltip ---------- */
 
-function bindTip(node, html) {
-  const show = (x, y) => {
+let pinned = false;
+
+function hideTip() {
+  pinned = false;
+  tip.classList.remove("pinned");
+  tip.hidden = true;
+}
+
+function bindTip(node, html, onAction = null) {
+  const show = (x, y, pin = false) => {
+    pinned = pin;
+    tip.classList.toggle("pinned", pin);
     tip.innerHTML = html();
+    if (pin && onAction) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "tip-action";
+      button.textContent = "Interrogation room";
+      button.addEventListener("click", () => {
+        hideTip();
+        onAction(node);
+      });
+      tip.appendChild(button);
+    }
     tip.hidden = false;
     const r = tip.getBoundingClientRect();
-    tip.style.left = `${Math.min(x + 14, innerWidth - r.width - 8)}px`;
+    tip.style.left = `${Math.max(8, Math.min(x + 14, innerWidth - r.width - 8))}px`;
     tip.style.top = `${Math.max(8, y - r.height - 10)}px`;
   };
-  node.addEventListener("pointerenter", (e) => show(e.clientX, e.clientY));
-  node.addEventListener("pointermove", (e) => show(e.clientX, e.clientY));
-  node.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") tip.hidden = true; });
+  const showAtNode = (pin) => {
+    const r = node.getBoundingClientRect();
+    show(r.right, r.top, pin);
+  };
+  node.addEventListener("pointerenter", (e) => { if (!pinned) show(e.clientX, e.clientY); });
+  node.addEventListener("pointermove", (e) => { if (!pinned) show(e.clientX, e.clientY); });
+  node.addEventListener("pointerleave", (e) => { if (!pinned && e.pointerType === "mouse") tip.hidden = true; });
   node.addEventListener("click", (e) => {
     e.stopPropagation();
-    show(e.clientX, e.clientY);
+    show(e.clientX, e.clientY, true);
   });
-  node.addEventListener("focus", () => {
-    const r = node.getBoundingClientRect();
-    show(r.right, r.top);
+  node.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    showAtNode(true);
+    tip.querySelector(".tip-action")?.focus();
   });
-  node.addEventListener("blur", () => { tip.hidden = true; });
+  node.addEventListener("focus", () => { if (!pinned) showAtNode(false); });
+  node.addEventListener("blur", () => { if (!pinned) tip.hidden = true; });
+}
+
+addEventListener("keydown", (e) => { if (e.key === "Escape" && pinned) hideTip(); });
+
+function openInterrogation(login, student, node) {
+  const route = layout.filter((w) => !w.fog).flatMap((w) => w.katas);
+  const avatar = SAMPLE ? null : `https://github.com/${encodeURIComponent(login)}.png?size=128`;
+  import("./interrogation.js").then((m) => m.interrogate({
+    login, passed: student.passed || [], avatar, route, color: teamColor(login), returnFocus: node,
+  }));
 }
 
 /* ---------- pan & zoom ---------- */
@@ -431,7 +469,7 @@ function setupPanZoom() {
     }
   };
 
-  svg.addEventListener("click", () => { tip.hidden = true; });
+  svg.addEventListener("click", hideTip);
   svg.addEventListener("pointerdown", (e) => {
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     last = { x: e.clientX, y: e.clientY };
@@ -457,7 +495,7 @@ function setupPanZoom() {
       dragging = true;
       capture(e.pointerId);
       svg.classList.add("dragging");
-      tip.hidden = true;
+      hideTip();
     }
     const r = svg.getBoundingClientRect();
     view.x -= ((e.clientX - last.x) / r.width) * view.w;
