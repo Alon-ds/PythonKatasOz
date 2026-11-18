@@ -1,0 +1,151 @@
+@font-face {
+  font-family: "Pixelify Sans";
+  src: url("assets/pixelify-sans-latin.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+:root {
+  --ocean: #1d4e89;
+  --ocean-light: #2f6aa8;
+  --ink: #241a33;
+  --paper: #fff4d6;
+  --gold: #ffcc33;
+  --flag: #ff5d5d;
+  --font: "Pixelify Sans", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ocean);
+  color: var(--ink);
+  font-family: var(--font);
+}
+
+#map {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  shape-rendering: crispEdges;
+}
+
+#map.dragging { cursor: grabbing; }
+#map text { font-family: var(--font); shape-rendering: auto; }
+
+.hud, .find, .banner {
+  position: fixed;
+  z-index: 2;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.hud {
+  top: 16px;
+  left: 16px;
+  padding: 10px 16px 12px;
+  max-width: calc(100vw - 32px);
+}
+
+.hud h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.hud p {
+  margin: 4px 0 0;
+  font-size: 1rem;
+}
+
+.find {
+  top: 16px;
+  right: 16px;
+  padding: 8px 10px 10px;
+}
+
+.find label {
+  display: block;
+  font-size: 0.875rem;
+  margin-bottom: 4px;
+}
+
+.find-row { display: flex; gap: 6px; }
+
+.find input, .find button {
+  font: inherit;
+  font-size: 1rem;
+  border: 2px solid var(--ink);
+  padding: 4px 8px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.find input { width: 11rem; }
+
+.find button {
+  background: var(--gold);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.find input:focus-visible, .find button:focus-visible, #map :focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.banner {
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 10px 16px;
+  font-size: 1rem;
+  max-width: calc(100vw - 32px);
+}
+
+.tip {
+  position: fixed;
+  z-index: 3;
+  pointer-events: none;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 6px 10px;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  max-width: 260px;
+  border: 2px solid var(--paper);
+}
+
+.tip strong { color: var(--gold); font-weight: 700; }
+
+.soldier { cursor: pointer; }
+.soldier.me .ring { stroke: var(--gold); stroke-width: 4; }
+.soldier.dim { opacity: 0.35; }
+
+.bob { animation: bob 1.6s steps(2) infinite; }
+.cloud { animation: drift 14s ease-in-out infinite alternate; }
+
+@keyframes bob { 50% { transform: translateY(-3px); } }
+@keyframes drift { to { transform: translateX(28px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bob, .cloud { animation: none; }
+}
+
+@media (max-width: 640px) {
+  .hud { padding: 6px 10px 8px; }
+  .hud h1 { font-size: 1.25rem; }
+  .hud p { font-size: 0.875rem; }
+  .find { top: auto; bottom: 16px; right: 16px; }
+  .find input { width: 8.5rem; }
+  .banner { bottom: 96px; }
+}

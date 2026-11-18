@@ -1,0 +1,409 @@
+{
+ "worlds": {
+  "title": "Python Katas \u2014 Oz",
+  "worlds": [
+   {
+    "id": "w1",
+    "name": "Hello Island",
+    "theme": "beach",
+    "katas": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer"
+    ]
+   },
+   {
+    "id": "w2",
+    "name": "Loop Jungle",
+    "theme": "jungle",
+    "katas": [
+     "word_count",
+     "list_diff",
+     "matrix_rotate",
+     "sum_of_digits",
+     "list_flatten"
+    ]
+   },
+   {
+    "id": "w3",
+    "name": "Dune Desert",
+    "theme": "desert",
+    "katas": [
+     "two_sum",
+     "binary_search",
+     "valid_anagram",
+     "email_validator",
+     "env_config_parser"
+    ]
+   }
+  ]
+ },
+ "progress": {
+  "students": {
+   "noa-levi": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer"
+    ],
+    "updated_at": "2026-11-18T09:35:00+00:00",
+    "pr": 10,
+    "world": 1,
+    "checkpoint": 0
+   },
+   "itay_dev": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer",
+     "word_count",
+     "list_diff",
+     "matrix_rotate"
+    ],
+    "updated_at": "2026-11-18T09:44:00+00:00",
+    "pr": 5,
+    "world": 1,
+    "checkpoint": 3
+   },
+   "maya-codes": {
+    "passed": [
+     "hello_world",
+     "backoff_retry"
+    ],
+    "updated_at": "2026-11-18T09:13:00+00:00",
+    "pr": 38,
+    "world": 0,
+    "checkpoint": 2
+   },
+   "yossi42": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer",
+     "word_count",
+     "list_diff",
+     "matrix_rotate",
+     "sum_of_digits",
+     "list_flatten",
+     "two_sum"
+    ],
+    "updated_at": "2026-11-18T09:12:00+00:00",
+    "pr": 14,
+    "world": 2,
+    "checkpoint": 1
+   },
+   "dana-k": {
+    "passed": [
+     "hello_world",
+     "backoff_retry"
+    ],
+    "updated_at": "2026-11-18T09:14:00+00:00",
+    "pr": 27,
+    "world": 0,
+    "checkpoint": 2
+   },
+   "omer-b": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer"
+    ],
+    "updated_at": "2026-11-18T09:37:00+00:00",
+    "pr": 36,
+    "world": 0,
+    "checkpoint": 4
+   },
+   "tamar-py": {
+    "passed": [
+     "hello_world",
+     "backoff_retry"
+    ],
+    "updated_at": "2026-11-18T09:17:00+00:00",
+    "pr": 37,
+    "world": 0,
+    "checkpoint": 2
+   },
+   "eli-sh": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer",
+     "word_count",
+     "list_diff",
+     "matrix_rotate",
+     "sum_of_digits",
+     "list_flatten",
+     "two_sum",
+     "binary_search"
+    ],
+    "updated_at": "2026-11-18T09:50:00+00:00",
+    "pr": 41,
+    "world": 2,
+    "checkpoint": 2
+   },
+   "shira-m": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer",
+     "word_count",
+     "list_diff"
+    ],
+    "updated_at": "2026-11-18T09:46:00+00:00",
+    "pr": 4,
+    "world": 1,
+    "checkpoint": 2
+   },
+   "avi-r": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer",
+     "word_count",
+     "list_diff"
+    ],
+    "updated_at": "2026-11-18T09:24:00+00:00",
+    "pr": 4,
+    "world": 1,
+    "checkpoint": 2
+   },
+   "lior-g": {
+    "passed": [
+     "hello_world",
+     "backoff_retry"
+    ],
+    "updated_at": "2026-11-18T09:18:00+00:00",
+    "pr": 55,
+    "world": 0,
+    "checkpoint": 2
+   },
+   "roni-t": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer"
+    ],
+    "updated_at": "2026-11-18T09:44:00+00:00",
+    "pr": 10,
+    "world": 1,
+    "checkpoint": 0
+   },
+   "gal-a": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker"
+    ],
+    "updated_at": "2026-11-18T09:45:00+00:00",
+    "pr": 20,
+    "world": 0,
+    "checkpoint": 3
+   },
+   "yael-n": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer",
+     "word_count",
+     "list_diff",
+     "matrix_rotate",
+     "sum_of_digits",
+     "list_flatten"
+    ],
+    "updated_at": "2026-11-18T09:16:00+00:00",
+    "pr": 12,
+    "world": 2,
+    "checkpoint": 0
+   },
+   "amit-z": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer",
+     "word_count",
+     "list_diff"
+    ],
+    "updated_at": "2026-11-18T09:22:00+00:00",
+    "pr": 41,
+    "world": 1,
+    "checkpoint": 2
+   },
+   "hila-p": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer"
+    ],
+    "updated_at": "2026-11-18T09:55:00+00:00",
+    "pr": 36,
+    "world": 1,
+    "checkpoint": 0
+   },
+   "nadav-c": {
+    "passed": [
+     "hello_world",
+     "backoff_retry"
+    ],
+    "updated_at": "2026-11-18T09:49:00+00:00",
+    "pr": 4,
+    "world": 0,
+    "checkpoint": 2
+   },
+   "michal-f": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer"
+    ],
+    "updated_at": "2026-11-18T09:44:00+00:00",
+    "pr": 44,
+    "world": 0,
+    "checkpoint": 4
+   },
+   "ido-s": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer",
+     "word_count"
+    ],
+    "updated_at": "2026-11-18T09:39:00+00:00",
+    "pr": 21,
+    "world": 1,
+    "checkpoint": 1
+   },
+   "keren-h": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer",
+     "word_count",
+     "list_diff"
+    ],
+    "updated_at": "2026-11-18T09:33:00+00:00",
+    "pr": 30,
+    "world": 1,
+    "checkpoint": 2
+   },
+   "ben-o": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer"
+    ],
+    "updated_at": "2026-11-18T09:21:00+00:00",
+    "pr": 51,
+    "world": 1,
+    "checkpoint": 0
+   },
+   "adi-l": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer",
+     "word_count",
+     "list_diff",
+     "matrix_rotate"
+    ],
+    "updated_at": "2026-11-18T09:15:00+00:00",
+    "pr": 16,
+    "world": 1,
+    "checkpoint": 3
+   },
+   "tom-y": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer",
+     "word_count",
+     "list_diff"
+    ],
+    "updated_at": "2026-11-18T09:41:00+00:00",
+    "pr": 34,
+    "world": 1,
+    "checkpoint": 2
+   },
+   "neta-w": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer",
+     "word_count",
+     "list_diff",
+     "matrix_rotate",
+     "sum_of_digits",
+     "list_flatten"
+    ],
+    "updated_at": "2026-11-18T09:38:00+00:00",
+    "pr": 47,
+    "world": 2,
+    "checkpoint": 0
+   },
+   "guy-e": {
+    "passed": [
+     "hello_world",
+     "backoff_retry",
+     "circuit_breaker",
+     "curcular_buffer",
+     "round_robin_load_balancer"
+    ],
+    "updated_at": "2026-11-18T09:17:00+00:00",
+    "pr": 5,
+    "world": 1,
+    "checkpoint": 0
+   }
+  },
+  "tested": [
+   "backoff_retry",
+   "binary_search",
+   "circuit_breaker",
+   "curcular_buffer",
+   "hello_world",
+   "list_diff",
+   "list_flatten",
+   "matrix_rotate",
+   "round_robin_load_balancer",
+   "sum_of_digits",
+   "two_sum",
+   "valid_anagram",
+   "word_count"
+  ],
+  "updated_at": "2026-11-18T10:40:00+00:00"
+ }
+}
