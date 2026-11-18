@@ -128,9 +128,18 @@ def main(argv=None):
     return 0
 
 
-def load_results(path):
-    with open(path, encoding="utf-8") as f:
-        return json.load(f).get("passed", [])
+def load_results(path, max_bytes=65536):
+    try:
+        if os.path.getsize(path) > max_bytes:
+            return []
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return []
+    passed = data.get("passed") if isinstance(data, dict) else None
+    if not isinstance(passed, list):
+        return []
+    return [k for k in passed if isinstance(k, str) and KATA_RE.match(k)]
 
 
 if __name__ == "__main__":
