@@ -6,6 +6,7 @@ const ISLAND_H = 380;
 const GAP = 240;
 const REFRESH_MS = 60_000;
 const ME_KEY = "katasMapMe";
+const ME_WORLD_KEY = "katasMapMeWorld";
 const SAMPLE = new URLSearchParams(location.search).has("sample");
 
 const THEMES = {
@@ -51,6 +52,10 @@ function el(name, attrs = {}, parent = null) {
   for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
   if (parent) parent.appendChild(node);
   return node;
+}
+
+function esc(str) {
+  return String(str).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 
 function hash(str) {
@@ -242,8 +247,8 @@ function drawWorld(world, parent, tested, counts) {
     num.textContent = isTested ? String(i + 1) : "?";
     label(kata, p.x, p.y + 40, 15, cp);
     const text = isTested
-      ? `<strong>${kata}</strong><br>${counts[kata] || 0} passed`
-      : `<strong>${kata}</strong><br>Coming soon`;
+      ? `<strong>${esc(kata)}</strong><br>${counts[kata] || 0} passed`
+      : `<strong>${esc(kata)}</strong><br>Coming soon`;
     cp.setAttribute("aria-label", `${kata}: ${isTested ? `${counts[kata] || 0} passed` : "coming soon"}`);
     bindTip(cp, () => text);
   });
@@ -306,7 +311,7 @@ function soldierTip(login, student) {
   const worlds = layout.filter((w) => !w.fog);
   const where = student.world >= worlds.length ? "Finished every world" : worlds[student.world]?.name || "";
   const n = (student.passed || []).length;
-  return `<strong>${login}</strong><br>${n} kata${n === 1 ? "" : "s"} passed<br>${where}`;
+  return `<strong>${esc(login)}</strong><br>${n} kata${n === 1 ? "" : "s"} passed<br>${esc(where)}`;
 }
 
 function drawSoldiers(parent) {
@@ -334,7 +339,7 @@ function drawSoldiers(parent) {
       const t = el("text", { x: anchor.x + 50, y: anchor.y - 56, "font-size": 16, "font-weight": 700, "text-anchor": "middle", fill: "#241a33" }, badge);
       t.textContent = `+${extra.length}`;
       bindTip(badge, () => {
-        const names = extra.slice(0, 15).map(([l]) => l).join("<br>");
+        const names = extra.slice(0, 15).map(([l]) => esc(l)).join("<br>");
         return extra.length > 15 ? `${names}<br>and ${extra.length - 15} more` : names;
       });
     }
@@ -528,17 +533,39 @@ async function refresh(initial = false) {
     progress = data.progress || { students: {}, tested: [] };
     const empty = !Object.keys(progress.students || {}).length;
     showBanner(empty ? "No soldiers yet. Open your [map] pull request to join the map." : "");
-    if (initial) {
-      render();
-      fitView();
-    } else {
-      render();
-    }
+    render();
+    if (initial) fitView();
+    celebrate();
   } catch (err) {
     console.error(err);
     showBanner("Could not load the latest progress. The map will retry in a minute.");
     if (initial) render();
   }
+}
+
+function rememberWorld(login) {
+  localStorage.setItem(ME_WORLD_KEY, JSON.stringify({ login, world: progress.students[login].world }));
+}
+
+async function celebrate() {
+  const login = findMe();
+  if (!login) return;
+  let seen = null;
+  try {
+    seen = JSON.parse(localStorage.getItem(ME_WORLD_KEY));
+  } catch {
+    seen = null;
+  }
+  rememberWorld(login);
+  if (!seen || seen.login !== login || progress.students[login].world <= seen.world) return;
+  showBanner(`${login} reached a new world!`);
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const { default: confetti } = await import("./assets/confetti.mjs");
+  const end = Date.now() + 4000;
+  (function frame() {
+    confetti({ particleCount: 12, startVelocity: 25, spread: 360, origin: { x: Math.random(), y: 0 }, zIndex: 9999 });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  }());
 }
 
 function setupFind() {
@@ -553,6 +580,7 @@ function setupFind() {
     if (!me) return showBanner("");
     if (!login) return showBanner(`No soldier named ${me} yet. Open your [map] pull request to join.`);
     showBanner("");
+    rememberWorld(login);
     const a = soldierAnchor(progress.students[login]);
     centerOn(a.x, a.y, Math.min(view.w, 1100));
   });
