@@ -105,6 +105,9 @@ class TestLoadResults(unittest.TestCase):
             with self.subTest(content=content):
                 self.assertEqual(load_results(self._results(content)), expected)
 
+    def test_load_results_deeply_nested(self):
+        self.assertEqual(load_results(self._results("[" * 60000)), [])
+
     def test_load_results_oversize(self):
         path = self._results(json.dumps({"passed": ["a"], "pad": "x" * 100}))
         self.assertEqual(load_results(path, max_bytes=50), [])

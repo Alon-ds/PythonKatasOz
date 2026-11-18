@@ -34,7 +34,8 @@ python -m unittest katas.test.test_hello_world
 - **Publishing a week:** add the kata files to `katas/`, their official tests to `katas/test/test_<kata>.py`,
   and a new world to `docs/worlds.json` (`id`, `name`, `theme` — one of `beach`, `jungle`, `desert`, `snow`, `lava`, `castle` —
   and the ordered `katas`; optional `required` = katas needed to move on, default all). Push to `main`; the map redeploys.
-  A kata without an official test shows as "coming soon" and doesn't block anyone.
+  A kata without an official test shows as "coming soon" and holds soldiers at that checkpoint until its test exists
+  (unless `required` lets them move on). When you add a test, all open PRs are re-tested automatically.
 - **One-time setup:** Settings → Pages → Source: **GitHub Actions**. The `github-pages` environment must allow deployments from `main` (the default).
 - **How it works:** `.github/workflows/map.yaml` runs on every student PR push (`pull_request_target`, no approvals needed):
   the official tests run against the student's kata files with a read-only token, results are stored in `progress.json`

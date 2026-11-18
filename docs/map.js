@@ -266,7 +266,8 @@ function soldierAnchor(student) {
   const world = worlds[student.world];
   const tested = new Set(progress.tested || []);
   const passed = new Set(student.passed || []);
-  const idx = world.katas.findIndex((k) => tested.has(k) && !passed.has(k));
+  let idx = world.katas.findIndex((k) => tested.has(k) && !passed.has(k));
+  if (idx < 0) idx = world.katas.findIndex((k) => !tested.has(k));
   if (idx < 0) return { ...world.entry, key: `${world.index}:entry` };
   return { ...world.spots[idx], key: `${world.index}:${idx}` };
 }
@@ -358,7 +359,11 @@ function bindTip(node, html) {
   };
   node.addEventListener("pointerenter", (e) => show(e.clientX, e.clientY));
   node.addEventListener("pointermove", (e) => show(e.clientX, e.clientY));
-  node.addEventListener("pointerleave", () => { tip.hidden = true; });
+  node.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") tip.hidden = true; });
+  node.addEventListener("click", (e) => {
+    e.stopPropagation();
+    show(e.clientX, e.clientY);
+  });
   node.addEventListener("focus", () => {
     const r = node.getBoundingClientRect();
     show(r.right, r.top);
@@ -416,14 +421,25 @@ function setupPanZoom() {
   let last = null;
   let pinch = null;
 
+  let start = null;
+  let dragging = false;
+  const capture = (id) => {
+    try {
+      svg.setPointerCapture(id);
+    } catch {
+      /* pointer already released */
+    }
+  };
+
+  svg.addEventListener("click", () => { tip.hidden = true; });
   svg.addEventListener("pointerdown", (e) => {
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    svg.setPointerCapture(e.pointerId);
-    svg.classList.add("dragging");
     last = { x: e.clientX, y: e.clientY };
+    start = { ...last };
     if (pointers.size === 2) {
       const [a, b] = [...pointers.values()];
       pinch = Math.hypot(a.x - b.x, a.y - b.y);
+      for (const id of pointers.keys()) capture(id);
     }
   });
   svg.addEventListener("pointermove", (e) => {
@@ -436,6 +452,13 @@ function setupPanZoom() {
       pinch = d;
       return;
     }
+    if (!dragging) {
+      if (Math.hypot(e.clientX - start.x, e.clientY - start.y) < 5) return;
+      dragging = true;
+      capture(e.pointerId);
+      svg.classList.add("dragging");
+      tip.hidden = true;
+    }
     const r = svg.getBoundingClientRect();
     view.x -= ((e.clientX - last.x) / r.width) * view.w;
     view.y -= ((e.clientY - last.y) / r.height) * view.h;
@@ -445,7 +468,10 @@ function setupPanZoom() {
   const end = (e) => {
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch = null;
-    if (pointers.size === 0) svg.classList.remove("dragging");
+    if (pointers.size === 0) {
+      svg.classList.remove("dragging");
+      dragging = false;
+    }
     const rest = [...pointers.values()][0];
     if (rest) last = { ...rest };
   };

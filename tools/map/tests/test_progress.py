@@ -25,8 +25,15 @@ class TestPosition(unittest.TestCase):
     def test_position_required_override(self):
         self.assertEqual(position(W, ALL, {"a", "b", "c", "e"}), (2, 0))
 
-    def test_position_untested_katas_not_required(self):
-        self.assertEqual(position(W, {"a", "b", "d", "e"}, {"a", "b"}), (1, 0))
+    def test_position_untested_katas_block_world(self):
+        self.assertEqual(position(W, {"a", "b", "d", "e"}, {"a", "b"}), (0, 2))
+
+    def test_position_required_ignores_untested(self):
+        self.assertEqual(position(W, ALL, {"a", "b", "c", "d"}), (2, 0))
+
+    def test_position_required_larger_than_tested_blocks(self):
+        worlds = [{**W[0], "required": 2}, W[1]]
+        self.assertEqual(position(worlds, {"a", "d"}, {"a", "d"}), (0, 1))
 
     def test_position_blocks_at_untested_world(self):
         self.assertEqual(position(W, {"a", "b", "c"}, {"a", "b", "c"}), (1, 0))
@@ -108,7 +115,7 @@ class TestFiles(unittest.TestCase):
             data = json.load(f)
         self.assertEqual(data["tested"], ["a"])
         self.assertEqual(data["students"]["bob"]["passed"], ["a"])
-        self.assertEqual(data["students"]["bob"]["world"], 1)
+        self.assertEqual(data["students"]["bob"]["world"], 0)
 
     def test_cli_prune_and_recompute(self):
         worlds = self._write("docs/worlds.json", {"title": "T", "worlds": [
@@ -121,6 +128,31 @@ class TestFiles(unittest.TestCase):
                                "--katas-dir", katas, "--open-logins", "amy"]), 0)
         with open(prog, encoding="utf-8") as f:
             self.assertEqual(set(json.load(f)["students"]), {"amy"})
+
+    def test_cli_apply_all_uses_only_targets(self):
+        worlds = self._write("docs/worlds.json", {"title": "T", "worlds": [
+            {"id": "w1", "name": "One", "theme": "beach", "katas": ["a", "b"]}]})
+        self._write("katas/test/test_a.py", "")
+        self._write("katas/test/test_b.py", "")
+        prog = self._write("progress.json", {"students": {
+            "amy": {"passed": ["a"], "updated_at": "T", "pr": 4, "world": 0, "checkpoint": 1}}})
+        targets = self._write("targets.json", [
+            {"login": "bob", "pr": 3, "repo": "bob/k", "sha": "x"},
+            {"login": "amy", "pr": 4, "repo": "amy/k", "sha": "y"},
+            {"login": "bad/one", "pr": 5, "repo": "z/k", "sha": "z"}])
+        self._write("results/results-bob-3/results.json", {"passed": ["a", "b"]})
+        self._write("results/results-mallory-9/results.json", {"passed": ["a", "b"]})
+        self._write("results/results-bad/one-5/results.json", {"passed": ["a"]})
+        rc = main(["apply-all", "--worlds", worlds, "--progress", prog,
+                   "--katas-dir", os.path.join(self.dir, "katas"),
+                   "--results-dir", os.path.join(self.dir, "results"), "--targets", targets])
+        self.assertEqual(rc, 0)
+        with open(prog, encoding="utf-8") as f:
+            students = json.load(f)["students"]
+        self.assertEqual(set(students), {"amy", "bob"})
+        self.assertEqual((students["bob"]["passed"], students["bob"]["world"], students["bob"]["pr"]),
+                         (["a", "b"], 1, 3))
+        self.assertEqual(students["amy"]["passed"], ["a"])
 
     def test_cli_rejects_bad_login(self):
         worlds = self._write("docs/worlds.json", {"title": "T", "worlds": [

@@ -18,16 +18,59 @@ on:
 permissions: {}
 
 jobs:
-  # Runs untrusted student code: read-only token, no secrets, no caches, no persisted credentials.
+  # Which student PRs to test: the PR that triggered the run, or every open fork PR
+  # (push to main, schedule, manual run) so new official tests credit existing solutions.
+  targets:
+    if: github.event_name != 'pull_request_target' || github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      matrix: ${{ steps.list.outputs.matrix }}
+      count: ${{ steps.list.outputs.count }}
+    steps:
+      - id: list
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          FORK: ${{ github.event.pull_request.head.repo.fork }}
+          LOGIN: ${{ github.event.pull_request.head.repo.owner.login }}
+          REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "pull_request_target" ]; then
+            if [ "$FORK" = "true" ]; then
+              matrix=$(jq -cn --arg login "$LOGIN" --arg repo "$REPO" --arg sha "$SHA" --argjson pr "$PR" \
+                '[{login: $login, repo: $repo, sha: $sha, pr: $pr}]')
+            else
+              matrix='[]'
+            fi
+          else
+            matrix=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 250 \
+              --json number,headRefOid,headRepository,headRepositoryOwner,isCrossRepository \
+              --jq '[.[] | select(.isCrossRepository) | {login: .headRepositoryOwner.login,
+                     repo: (.headRepositoryOwner.login + "/" + .headRepository.name), sha: .headRefOid, pr: .number}]')
+          fi
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "count=$(jq length <<< "$matrix")" >> "$GITHUB_OUTPUT"
+
+  # Runs untrusted student code: read-only token, no secrets, no persisted credentials,
+  # and no actions/cache or setup-python caching anywhere in this repo (caches written here are scoped to main).
   test:
-    if: >-
-      github.event_name == 'pull_request_target' &&
-      github.event.action != 'closed' &&
-      github.event.pull_request.head.repo.fork
+    needs: targets
+    if: needs.targets.outputs.count != '0'
+    name: test ${{ matrix.target.login }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        target: ${{ fromJson(needs.targets.outputs.matrix) }}
     steps:
       - name: Checkout official katas and tests (main)
         uses: actions/checkout@v4
@@ -38,8 +81,8 @@ jobs:
       - name: Checkout student solutions
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ matrix.target.repo }}
+          ref: ${{ matrix.target.sha }}
           path: student
           persist-credentials: false
 
@@ -59,18 +102,17 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: results
+          name: results-${{ matrix.target.login }}-${{ matrix.target.pr }}
           path: results.json
           retention-days: 1
 
-  # Trusted: never checks out or executes PR code.
+  # Trusted: never checks out or executes PR code. Identities come from the targets job, not from artifacts.
   collect:
-    needs: test
+    needs: [targets, test]
     if: >-
-      always() && (
-        needs.test.result == 'success' ||
-        github.event_name != 'pull_request_target' ||
-        github.event.action == 'closed'
+      always() && !cancelled() && (
+        needs.targets.result == 'success' ||
+        (github.event_name == 'pull_request_target' && github.event.action == 'closed')
       )
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -85,10 +127,11 @@ jobs:
           python-version: "3.12"
 
       - name: Download test results
-        if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
+        if: needs.test.result != 'skipped'
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
-          name: results
+          pattern: results-*
           path: results
 
       - name: Update progress.json on branch map-data
@@ -96,26 +139,24 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           EVENT: ${{ github.event_name }}
           ACTION: ${{ github.event.action }}
-          LOGIN: ${{ github.event.pull_request.head.repo.owner.login }}
-          PR: ${{ github.event.pull_request.number }}
+          TARGETS: ${{ needs.targets.outputs.matrix }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           PROGRESS="$RUNNER_TEMP/progress.json"
+          printf '%s' "${TARGETS:-[]}" > "$RUNNER_TEMP/targets.json"
+          mkdir -p results
           cli() { python3 -m tools.map.progress "$1" --worlds docs/worlds.json --katas-dir katas --progress "$PROGRESS" "${@:2}"; }
 
           update() {
-            if [ "$EVENT" = "pull_request_target" ] && [ "$ACTION" != "closed" ]; then
-              cli apply --login "$LOGIN" --pr "$PR" --results results/results.json
-            elif [ "$EVENT" = "pull_request_target" ] || [ "$EVENT" = "schedule" ]; then
+            if [ "$ACTION" = "closed" ] || [ "$EVENT" = "schedule" ]; then
               open=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 500 \
                 --json headRepositoryOwner --jq '[.[].headRepositoryOwner.login] | join(",")')
               cli prune --open-logins "$open"
-              cli recompute
-            else
-              cli recompute
             fi
+            cli apply-all --results-dir results --targets "$RUNNER_TEMP/targets.json"
+            cli recompute
           }
 
           for attempt in 1 2 3 4 5; do
@@ -128,7 +169,7 @@ jobs:
             update
             blob=$(git hash-object -w "$PROGRESS")
             tree=$(printf '100644 blob %s\tprogress.json\n' "$blob" | git mktree)
-            commit=$(git commit-tree "$tree" ${parent:+-p "$parent"} -m "map: $EVENT ${LOGIN:-}")
+            commit=$(git commit-tree "$tree" ${parent:+-p "$parent"} -m "map: $EVENT ${ACTION:-}")
             if git push origin "$commit:refs/heads/map-data"; then
               exit 0
             fi

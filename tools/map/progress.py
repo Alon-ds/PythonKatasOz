@@ -40,7 +40,7 @@ def position(worlds, tested, passed):
     for i, world in enumerate(worlds):
         countable = [k for k in world["katas"] if k in tested]
         done = sum(1 for k in countable if k in passed)
-        need = min(world["required"] or len(countable), len(countable))
+        need = len(world["katas"]) if world["required"] is None else world["required"]
         if not countable or done < need:
             return i, done
     return len(worlds), 0
@@ -81,6 +81,20 @@ def prune(progress, open_logins):
     return {**progress, "students": students}
 
 
+def apply_targets(progress, worlds, tested, results_dir, targets_path, now):
+    """Apply results/results-<login>-<pr>/results.json for each trusted target; other folders are ignored."""
+    with open(targets_path, encoding="utf-8") as f:
+        targets = json.load(f)
+    for target in targets:
+        login, pr = target.get("login"), target.get("pr")
+        if not isinstance(login, str) or not LOGIN_RE.match(login) or not isinstance(pr, int):
+            continue
+        path = os.path.join(results_dir, f"results-{login}-{pr}", "results.json")
+        if os.path.isfile(path):
+            progress = apply_result(progress, worlds, tested, login, pr, load_results(path), now)
+    return progress
+
+
 def _read_progress(path):
     if not os.path.exists(path):
         return {}
@@ -97,7 +111,7 @@ def _write_progress(path, progress):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["apply", "recompute", "prune"])
+    parser.add_argument("command", choices=["apply", "apply-all", "recompute", "prune"])
     parser.add_argument("--worlds", required=True)
     parser.add_argument("--progress", required=True)
     parser.add_argument("--katas-dir", required=True)
@@ -105,6 +119,8 @@ def main(argv=None):
     parser.add_argument("--login")
     parser.add_argument("--pr", type=int)
     parser.add_argument("--open-logins", default="")
+    parser.add_argument("--results-dir")
+    parser.add_argument("--targets")
     args = parser.parse_args(argv)
 
     worlds = load_worlds(args.worlds)
@@ -118,6 +134,11 @@ def main(argv=None):
             return 2
         progress = apply_result(progress, worlds, tested, args.login, args.pr,
                                 load_results(args.results), now)
+    elif args.command == "apply-all":
+        if not args.results_dir or not args.targets:
+            print("apply-all needs --results-dir and --targets", file=sys.stderr)
+            return 2
+        progress = apply_targets(progress, worlds, tested, args.results_dir, args.targets, now)
     elif args.command == "prune":
         open_logins = {s for s in args.open_logins.split(",") if LOGIN_RE.match(s)}
         progress = prune(progress, open_logins)
@@ -134,7 +155,7 @@ def load_results(path, max_bytes=65536):
             return []
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
-    except (OSError, ValueError):
+    except (OSError, ValueError, RecursionError):
         return []
     passed = data.get("passed") if isinstance(data, dict) else None
     if not isinstance(passed, list):
