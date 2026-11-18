@@ -5,7 +5,7 @@ def hello_world():
     """
     Returns the string "hello world".
     """
-    return "hello world"
+    return NotImplementedError("hello_world not implemented.")
 
 
 
