@@ -197,9 +197,9 @@ html, body {
 .door { transform-origin: 660px 170px; transition: transform 0.4s steps(3); }
 .door-open .door { transform: scaleX(0.12); }
 
-.inv-pos { transform: translate(820px, 160px); transition: transform 1.6s linear; }
-.inv-in .inv-pos { transform: translate(496px, 160px); }
-.lean .inv-pos { transform: translate(466px, 156px); transition-duration: 0.4s; }
+.inv-pos { transform: translate(820px, 76px); transition: transform 1.6s linear; }
+.inv-in .inv-pos { transform: translate(556px, 76px); }
+.lean .inv-pos { transform: translate(516px, 90px); transition-duration: 0.4s; }
 .inv-in:not(.lean) .inv { animation: walk 0.4s steps(2) 4; }
 
 .student-pos { transform: translate(286px, 336px); transition: transform 0.35s steps(3); }
@@ -244,6 +244,7 @@ html, body {
 @media (max-width: 600px) {
   .bubble { max-width: 62%; padding: 5px 8px; font-size: 0.62rem; border-width: 2px; box-shadow: 3px 3px 0 var(--ink); }
   .bubble.stu { top: 3%; }
+  .bubble.inv { top: 1.5%; }
   .stage .skip { font-size: 0.65rem; padding: 3px 8px; border-width: 2px; }
 }
 

@@ -1,5 +1,5 @@
 const NS = "http://www.w3.org/2000/svg";
-const PX = 5;
+const PX = 10;
 const ABORT = Symbol("abort");
 
 const INVESTIGATOR = [
