@@ -1,0 +1,169 @@
+name: Katas Map
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, closed]
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "katas/test/**"
+      - "tools/**"
+      - ".github/workflows/map.yaml"
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  # Runs untrusted student code: read-only token, no secrets, no caches, no persisted credentials.
+  test:
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.fork
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout official katas and tests (main)
+        uses: actions/checkout@v4
+        with:
+          path: trusted
+          persist-credentials: false
+
+      - name: Checkout student solutions
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: student
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Lint (informational only)
+        continue-on-error: true
+        run: |
+          pip install -q pylint
+          pylint --rcfile trusted/.pylintrc student/katas/*.py
+
+      - name: Run official tests
+        working-directory: trusted
+        run: python3 -m tools.map.run_tests --trusted . --student ../student --worlds docs/worlds.json --out ../results.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: results
+          path: results.json
+          retention-days: 1
+
+  # Trusted: never checks out or executes PR code.
+  collect:
+    needs: test
+    if: >-
+      always() && (
+        needs.test.result == 'success' ||
+        github.event_name != 'pull_request_target' ||
+        github.event.action == 'closed'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download test results
+        if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
+        uses: actions/download-artifact@v4
+        with:
+          name: results
+          path: results
+
+      - name: Update progress.json on branch map-data
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
+          LOGIN: ${{ github.event.pull_request.head.repo.owner.login }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          PROGRESS="$RUNNER_TEMP/progress.json"
+          cli() { python3 -m tools.map.progress "$1" --worlds docs/worlds.json --katas-dir katas --progress "$PROGRESS" "${@:2}"; }
+
+          update() {
+            if [ "$EVENT" = "pull_request_target" ] && [ "$ACTION" != "closed" ]; then
+              cli apply --login "$LOGIN" --pr "$PR" --results results/results.json
+            elif [ "$EVENT" = "pull_request_target" ] || [ "$EVENT" = "schedule" ]; then
+              open=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 500 \
+                --json headRepositoryOwner --jq '[.[].headRepositoryOwner.login] | join(",")')
+              cli prune --open-logins "$open"
+              cli recompute
+            else
+              cli recompute
+            fi
+          }
+
+          for attempt in 1 2 3 4 5; do
+            parent=""
+            rm -f "$PROGRESS"
+            if git fetch --depth 1 origin map-data 2>/dev/null; then
+              parent=$(git rev-parse FETCH_HEAD)
+              git show FETCH_HEAD:progress.json > "$PROGRESS" || rm -f "$PROGRESS"
+            fi
+            update
+            blob=$(git hash-object -w "$PROGRESS")
+            tree=$(printf '100644 blob %s\tprogress.json\n' "$blob" | git mktree)
+            commit=$(git commit-tree "$tree" ${parent:+-p "$parent"} -m "map: $EVENT ${LOGIN:-}")
+            if git push origin "$commit:refs/heads/map-data"; then
+              exit 0
+            fi
+            echo "push rejected (attempt $attempt), retrying"
+            sleep $((RANDOM % 5 + 1))
+          done
+          exit 1
+
+  deploy:
+    needs: collect
+    if: always() && needs.collect.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Assemble site
+        run: |
+          git fetch --depth 1 origin map-data
+          git show FETCH_HEAD:progress.json > docs/progress.json
+          rm -rf docs/superpowers
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
