@@ -1,0 +1,11 @@
+{
+  "title": "Python Katas — Oz",
+  "worlds": [
+    {
+      "id": "w1",
+      "name": "Hello Island",
+      "theme": "beach",
+      "katas": ["hello_world", "backoff_retry", "circuit_breaker", "curcular_buffer", "round_robin_load_balancer"]
+    }
+  ]
+}
