@@ -5,16 +5,21 @@ def word_count(sentence):
     """
     Counts how many words are in a sentence.
 
-    Words are separated by whitespace. Repeated spaces, tabs, and newlines
-    count as a single break. 
-
-    Args:
-        sentence: the text to count
-
-    Returns:
-        the number of words. An empty or whitespace-only sentence returns 0.
+    A new word starts when we find a non-whitespace character
+    while we are not already inside a word.
     """
-    raise NotImplementedError("word_count not implemented.")
+    count = 0
+    in_word = False
+
+    for char in sentence:
+        if char.isspace():
+            in_word = False
+        else:
+            if not in_word:
+                count += 1
+                in_word = True
+
+    return count
 
 
 if __name__ == '__main__':
